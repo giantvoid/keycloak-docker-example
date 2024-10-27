@@ -1,0 +1,44 @@
+services:
+
+  db:
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+      args:
+        POSTGRES_INIT_SCRIPT: init-keycloak-db.sql
+    container_name: pavk-keycloak-db
+    restart: unless-stopped
+    #shm_size: 128mb
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: keycloak-db
+    # Expose to both host and other containers
+    ports:
+      - "5433:5433"
+    # Expose to other containers
+    expose:
+      - "5433"
+    command: -p 5433
+
+  pavk-keycloak:
+    depends_on:
+      - db
+    build:
+      context: ./keycloak
+      dockerfile: Dockerfile
+      args:
+        DB_VENDOR: postgres
+        DB_HOST: pavk-keycloak-db
+        DB_PORT: 5433
+        DB_DATABASE: keycloak-db
+        DB_USER: user
+        DB_PASSWORD: password
+        KEYCLOAK_USER: admin
+        KEYCLOAK_PASSWORD: changeme
+        LOG_LEVEL: INFO
+    container_name: pavk-keycloak
+    restart: unless-stopped
+    command: start-dev
+    ports:
+      - "8080:8080"
