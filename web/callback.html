@@ -1,10 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Keycloak login example</title>
+    <title>Keycloak callback</title>
+    <script>
+        function onLoad() {
+            const url = new URL(window.location.href);
+            const code = url.searchParams.get("code");
+            const sessionState = url.searchParams.get("session_state");
+            const iss = url.searchParams.get("iss");
+            console.log("code: " + code);
+            console.log("session_state: " + sessionState);
+            console.log("iss: " + iss);
+            console.log("url: " + window.location.href);
+
+            document.getElementById("code").innerText = code;
+            document.getElementById("session_state").innerText = sessionState;
+            document.getElementById("iss").innerText = iss;
+            document.getElementById("url").innerText = window.location.href;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "https://cs-testumgebung.com/realms/testrealm1/protocol/openid-connect/token", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    document.getElementById("access_token").innerText = response.access_token;
+                    document.getElementById("refresh_token").innerText = response.refresh_token;
+                }
+            };
+            xhr.send("grant_type=authorization_code&code=" + code + "&redirect_uri=http://localhost:8000/callback.html&client_id=webclient1"); //&client_secret=secret");
+        }
+    </script>
 </head>
-<body>
+<body onload="onLoad()">
     <h1>Keycloak login example</h1>
+    <table>
+        <tr>
+            <td>code</td>
+            <td id="code"></td>
+        </tr>
+        <tr>
+            <td>session_state</td>
+            <td id="session_state"></td>
+        </tr>
+        <tr>
+            <td>iss</td>
+            <td id="iss"></td>
+        </tr>
+        <tr>
+            <td>url</td>
+            <td id="url"></td>
+        </tr>
+        <tr>
+            <td>access_token</td>
+            <td id="access_token"></td>
+        </tr>
+        <tr>
+            <td>refresh_token</td>
+            <td id="refresh_token"></td>
+        </tr>
+    </table>
     <p>
         http://localhost:8000/callback.html?session_state=e3bfad9d-e0b9-4a3b-8eba-83f2a90647e7&iss=http%3A%2F%2Flocalhost%3A8080%2Frealms%2Ftest1&code=ef9833f8-f2bf-47b9-84b9-9216748dee46.e3bfad9d-e0b9-4a3b-8eba-83f2a90647e7.53b90a95-aa69-4a9c-84ae-f8f32953a175
         callback.html
